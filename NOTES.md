@@ -102,3 +102,75 @@ The provider would be scoped too low. Widgets outside CartBody or above that pro
 | BlocListener | ref.listen |
 | context.read | ref.read |
 | buildWhen | ref.watch(provider.select(...)) |
+
+
+
+## Part 5 — Bloc
+
+### Question 1 — When is the event layer worth its boilerplate?
+
+The event layer is worth the extra code when an application has complex workflows, multiple event sources, or needs explicit control over event processing. In this cart, checkout is a good example because Bloc can use `droppable()` to ignore duplicate checkout requests while one is already running. A simple quantity increment is a case where the event layer is mostly overhead: a Cubit method such as `changeQty()` is simpler and easier to understand.
+
+### Question 2 — Which styles support declarative duplicate-tap prevention?
+
+Bloc supports declarative duplicate-tap prevention through event transformers such as `droppable()`. In setState, Riverpod and Cubit, we would implement an explicit loading flag or check the current checkout status before starting another request. Bloc makes this concurrency policy part of event handling rather than requiring a manual guard in every action.
+
+---
+
+## Final Checkpoint Questions
+
+### Question 1 — Where does state live in each style, and when does it die?
+
+- **setState:** State lives in the page's State object and is destroyed when that widget is removed from the widget tree.
+- **Riverpod:** State lives in the CartNotifier managed by its provider. Because the provider uses auto-dispose, it is destroyed when it has no listeners.
+- **Cubit:** State lives inside CartCubit, which is owned by BlocProvider and closed when the provider is disposed.
+- **Bloc:** State lives inside CartBloc, which is also owned by BlocProvider and closed when the provider is disposed.
+
+### Question 2 — What is the public mutation API in each style?
+
+- **Riverpod:** Public methods on the Notifier, such as `add()` and `applyCoupon()`.
+- **Cubit:** Public methods on the Cubit, such as `add()` and `checkout()`.
+- **Bloc:** `add(event)`, which sends an event to the Bloc for processing.
+- **setState:** There is no separate public state-management API. State changes are performed directly inside the State object using `setState()`.
+
+### Question 3 — Map Riverpod subscriptions to Bloc and setState.
+
+| Riverpod | flutter_bloc | Purpose |
+|---|---|---|
+| `ref.watch()` | `BlocBuilder` | Subscribe to state and rebuild UI |
+| `ref.read()` | `context.read()` | Read once, usually to call a method or dispatch an event |
+| `ref.listen()` | `BlocListener` | React to state changes without rebuilding the UI |
+
+In setState, `setState()` updates local state and schedules a rebuild. It does not provide separate read, watch and listen APIs.
+
+### Question 4 — Why do Riverpod, Cubit and Bloc skip equal states?
+
+They skip notifications when the new state compares equal to the previous state because notifying listeners about an unchanged state would cause unnecessary work and rebuilds.
+
+For this to work correctly, CartState must:
+
+1. Implement value equality using `operator ==` and `hashCode`.
+2. Be immutable: create new state objects instead of modifying existing state objects in place.
+
+This ensures that genuine changes are detected and identical states can be ignored.
+
+### Question 5 — What guard is needed after await in checkout?
+
+- **setState:** Check `mounted` before calling `setState()` because the page may have been disposed.
+- **Riverpod:** Check `ref.mounted` before accessing the notifier's state or Ref after an asynchronous operation, if the provider may have been disposed.
+- **Cubit:** Check `isClosed` before calling `emit()` because the Cubit may have been closed.
+- **Bloc:** Check `emit.isDone` before emitting because the event handler may have completed or been cancelled.
+
+These guards differ because each state-management approach has its own lifecycle and asynchronous execution model.
+
+---
+
+## Comparison Table
+
+
+| Style | Implementation LOC (T1–T5) | Test LOC | Implementation files | One strength | One weakness |
+|---|---:|---:|---:|---|---|
+| setState | 169 | 26 | 1 | Simplest approach with minimal boilerplate; ideal for local widget state. | Difficult to share state across pages and manage complex asynchronous workflows. |
+| Riverpod | 257 | 61 | 2 | Excellent provider-based dependency management and selective subscriptions. | Requires understanding providers, lifecycles and Ref semantics. |
+| Cubit | 241 | 100 | 2 | Simple method-based state transitions with predictable emissions and easy testing. | No built-in event layer or declarative event concurrency transformers. |
+| Bloc | 346 | 295 | 3 | Explicit events, transition logging and concurrency control through event transformers such as `droppable()`. | More boilerplate from event classes, handlers and verbose state-transition tests. |
