@@ -113,6 +113,33 @@ enum CheckoutStatus {
   failure,
 }
 
+class CartSnapshot {
+  const CartSnapshot({
+    required this.lines,
+    this.coupon,
+    this.couponError,
+  });
+
+  final List<CartLine> lines;
+  final String? coupon;
+  final String? couponError;
+
+  @override
+  bool operator ==(Object other) {
+    return other is CartSnapshot &&
+        listEquals(other.lines, lines) &&
+        other.coupon == coupon &&
+        other.couponError == couponError;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        Object.hashAll(lines),
+        coupon,
+        couponError,
+      );
+}
+
 class CartState {
   const CartState({
     this.lines = const [],
@@ -122,6 +149,7 @@ class CartState {
     this.orderId,
     this.checkoutError,
     this.canUndo = false,
+    this.history = const [],
   });
 
   final List<CartLine> lines;
@@ -131,15 +159,11 @@ class CartState {
   final String? orderId;
   final String? checkoutError;
   final bool canUndo;
+  final List<CartSnapshot> history;
 
   int get itemCount => lines.itemCount;
-
   double get subtotal => lines.subtotal;
-
-  double get discount {
-    return coupon == 'SAVE10' ? subtotal * 0.10 : 0;
-  }
-
+  double get discount => coupon == 'SAVE10' ? subtotal * 0.10 : 0;
   double get total => subtotal - discount;
 
   CartState copyWith({
@@ -150,6 +174,7 @@ class CartState {
     String? orderId,
     String? checkoutError,
     bool? canUndo,
+    List<CartSnapshot>? history,
     bool clearCoupon = false,
     bool clearCouponError = false,
     bool clearOrderId = false,
@@ -166,6 +191,7 @@ class CartState {
           ? null
           : checkoutError ?? this.checkoutError,
       canUndo: canUndo ?? this.canUndo,
+      history: history ?? this.history,
     );
   }
 
@@ -178,7 +204,8 @@ class CartState {
         other.status == status &&
         other.orderId == orderId &&
         other.checkoutError == checkoutError &&
-        other.canUndo == canUndo;
+        other.canUndo == canUndo &&
+        listEquals(other.history, history);
   }
 
   @override
@@ -191,6 +218,7 @@ class CartState {
       orderId,
       checkoutError,
       canUndo,
+      Object.hashAll(history),
     );
   }
 }

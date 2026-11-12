@@ -2,7 +2,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'bloc/cart_bloc_observer.dart';
+import 'bloc/cart_page_bloc.dart';
+import 'cubit/cart_page_cubit.dart';
+import 'riverpod/cart_page_riverpod.dart';
+import 'setstate/cart_page_setstate.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 void main() {
+  Bloc.observer = CartBlocObserver();
+
   runApp(
     const ProviderScope(
       child: MyApp(),
@@ -34,13 +43,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      'setState',
-      'Riverpod',
-      'Cubit',
-      'Bloc',
-    ];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('One Cart, Four Ways'),
@@ -51,48 +53,53 @@ class HomePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              for (final page in pages)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => StubPage(name: page),
-                          ),
-                        );
-                      },
-                      child: Text('Open $page cart'),
-                    ),
-                  ),
-                ),
+              _buildPageButton(
+                context,
+                'setState',
+                const SetStateCartPage(),
+              ),
+              _buildPageButton(
+                context,
+                'Riverpod',
+                const RiverpodCartPage(),
+              ),
+              _buildPageButton(
+                context,
+                'Cubit',
+                const CubitCartPage(),
+              ),
+              _buildPageButton(
+                context,
+                'Bloc',
+                const BlocCartPage(),
+              ),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-class StubPage extends StatelessWidget {
-  const StubPage({
-    super.key,
-    required this.name,
-  });
-
-  final String name;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Cart · $name'),
-      ),
-      body: Center(
-        child: Text('$name cart will be implemented here'),
+  Widget _buildPageButton(
+    BuildContext context,
+    String name,
+    Widget page,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: FilledButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => page,
+              ),
+            );
+          },
+          child: Text('Open $name cart'),
+        ),
       ),
     );
   }
