@@ -1,4 +1,6 @@
+
 import 'package:flutter/material.dart';
+
 import '../models/cart.dart';
 
 class CartBody extends StatelessWidget {
@@ -10,6 +12,7 @@ class CartBody extends StatelessWidget {
     required this.onQtyChanged,
     required this.onApplyCoupon,
     required this.onCheckout,
+    this.summary,
   });
 
   final CartState state;
@@ -20,11 +23,12 @@ class CartBody extends StatelessWidget {
   final void Function(String code) onApplyCoupon;
   final VoidCallback onCheckout;
 
+  final Widget? summary;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Product selection
         Padding(
           padding: const EdgeInsets.all(12),
           child: Wrap(
@@ -41,8 +45,6 @@ class CartBody extends StatelessWidget {
             ],
           ),
         ),
-
-        // Coupon input
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
@@ -66,7 +68,6 @@ class CartBody extends StatelessWidget {
             ],
           ),
         ),
-
         if (state.couponError != null)
           Padding(
             padding: const EdgeInsets.all(8),
@@ -75,8 +76,6 @@ class CartBody extends StatelessWidget {
               style: const TextStyle(color: Colors.red),
             ),
           ),
-
-        // Cart contents
         Expanded(
           child: state.lines.isEmpty
               ? const Center(child: Text('Cart is empty'))
@@ -115,35 +114,32 @@ class CartBody extends StatelessWidget {
                   ],
                 ),
         ),
-
-        // Cart summary
-        Card(
-          margin: const EdgeInsets.all(12),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                _summaryRow('Items', '${state.itemCount}'),
-                _summaryRow(
-                  'Subtotal',
-                  state.subtotal.toStringAsFixed(2),
+        summary ??
+            Card(
+              margin: const EdgeInsets.all(12),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    _summaryRow('Items', '${state.itemCount}'),
+                    _summaryRow(
+                      'Subtotal',
+                      state.subtotal.toStringAsFixed(2),
+                    ),
+                    _summaryRow(
+                      'Discount',
+                      state.discount.toStringAsFixed(2),
+                    ),
+                    const Divider(),
+                    _summaryRow(
+                      'Total',
+                      state.total.toStringAsFixed(2),
+                      bold: true,
+                    ),
+                  ],
                 ),
-                _summaryRow(
-                  'Discount',
-                  state.discount.toStringAsFixed(2),
-                ),
-                const Divider(),
-                _summaryRow(
-                  'Total',
-                  state.total.toStringAsFixed(2),
-                  bold: true,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-
-        // Checkout
         Padding(
           padding: const EdgeInsets.only(
             left: 12,

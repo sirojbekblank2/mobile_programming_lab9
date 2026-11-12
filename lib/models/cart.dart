@@ -1,3 +1,6 @@
+
+import 'package:flutter/foundation.dart';
+
 class Product {
   const Product({
     required this.id,
@@ -8,6 +11,17 @@ class Product {
   final String id;
   final String name;
   final double price;
+
+  @override
+  bool operator ==(Object other) {
+    return other is Product &&
+        other.id == id &&
+        other.name == name &&
+        other.price == price;
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, price);
 }
 
 const catalog = [
@@ -33,9 +47,18 @@ class CartLine {
       qty: qty ?? this.qty,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CartLine &&
+        other.product == product &&
+        other.qty == qty;
+  }
+
+  @override
+  int get hashCode => Object.hash(product, qty);
 }
 
-/// Pure cart operations shared by all four state-management styles.
 extension CartLines on List<CartLine> {
   List<CartLine> withProduct(Product product) {
     final index = indexWhere(
@@ -90,7 +113,6 @@ enum CheckoutStatus {
   failure,
 }
 
-/// Complete immutable state of the cart.
 class CartState {
   const CartState({
     this.lines = const [],
@@ -108,7 +130,6 @@ class CartState {
   final String? orderId;
   final String? checkoutError;
 
-  // Derived values: never store these separately.
   int get itemCount => lines.itemCount;
 
   double get subtotal => lines.subtotal;
@@ -141,6 +162,29 @@ class CartState {
       checkoutError: clearCheckoutError
           ? null
           : checkoutError ?? this.checkoutError,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CartState &&
+        listEquals(other.lines, lines) &&
+        other.coupon == coupon &&
+        other.couponError == couponError &&
+        other.status == status &&
+        other.orderId == orderId &&
+        other.checkoutError == checkoutError;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      Object.hashAll(lines),
+      coupon,
+      couponError,
+      status,
+      orderId,
+      checkoutError,
     );
   }
 }
