@@ -1,4 +1,3 @@
-
 class Product {
   const Product({
     required this.id,
@@ -36,6 +35,7 @@ class CartLine {
   }
 }
 
+/// Pure cart operations shared by all four state-management styles.
 extension CartLines on List<CartLine> {
   List<CartLine> withProduct(Product product) {
     final index = indexWhere(
@@ -64,17 +64,83 @@ extension CartLines on List<CartLine> {
     ];
   }
 
+  List<CartLine> changeQty(String productId, int delta) {
+    return [
+      for (final line in this)
+        if (line.product.id != productId)
+          line
+        else if (line.qty + delta > 0)
+          line.copyWith(qty: line.qty + delta),
+    ];
+  }
+
   double get subtotal {
-    return fold<double>(
-      0,
-      (sum, line) => sum + line.subtotal,
-    );
+    return fold(0.0, (sum, line) => sum + line.subtotal);
   }
 
   int get itemCount {
-    return fold<int>(
-      0,
-      (sum, line) => sum + line.qty,
+    return fold(0, (sum, line) => sum + line.qty);
+  }
+}
+
+enum CheckoutStatus {
+  idle,
+  submitting,
+  success,
+  failure,
+}
+
+/// Complete immutable state of the cart.
+class CartState {
+  const CartState({
+    this.lines = const [],
+    this.coupon,
+    this.couponError,
+    this.status = CheckoutStatus.idle,
+    this.orderId,
+    this.checkoutError,
+  });
+
+  final List<CartLine> lines;
+  final String? coupon;
+  final String? couponError;
+  final CheckoutStatus status;
+  final String? orderId;
+  final String? checkoutError;
+
+  // Derived values: never store these separately.
+  int get itemCount => lines.itemCount;
+
+  double get subtotal => lines.subtotal;
+
+  double get discount {
+    return coupon == 'SAVE10' ? subtotal * 0.10 : 0;
+  }
+
+  double get total => subtotal - discount;
+
+  CartState copyWith({
+    List<CartLine>? lines,
+    String? coupon,
+    String? couponError,
+    CheckoutStatus? status,
+    String? orderId,
+    String? checkoutError,
+    bool clearCoupon = false,
+    bool clearCouponError = false,
+    bool clearOrderId = false,
+    bool clearCheckoutError = false,
+  }) {
+    return CartState(
+      lines: lines ?? this.lines,
+      coupon: clearCoupon ? null : coupon ?? this.coupon,
+      couponError:
+          clearCouponError ? null : couponError ?? this.couponError,
+      status: status ?? this.status,
+      orderId: clearOrderId ? null : orderId ?? this.orderId,
+      checkoutError: clearCheckoutError
+          ? null
+          : checkoutError ?? this.checkoutError,
     );
   }
 }
