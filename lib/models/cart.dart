@@ -121,6 +121,7 @@ class CartState {
     this.status = CheckoutStatus.idle,
     this.orderId,
     this.checkoutError,
+    this.canUndo = false,
   });
 
   final List<CartLine> lines;
@@ -129,6 +130,7 @@ class CartState {
   final CheckoutStatus status;
   final String? orderId;
   final String? checkoutError;
+  final bool canUndo;
 
   int get itemCount => lines.itemCount;
 
@@ -147,6 +149,7 @@ class CartState {
     CheckoutStatus? status,
     String? orderId,
     String? checkoutError,
+    bool? canUndo,
     bool clearCoupon = false,
     bool clearCouponError = false,
     bool clearOrderId = false,
@@ -162,6 +165,7 @@ class CartState {
       checkoutError: clearCheckoutError
           ? null
           : checkoutError ?? this.checkoutError,
+      canUndo: canUndo ?? this.canUndo,
     );
   }
 
@@ -173,7 +177,8 @@ class CartState {
         other.couponError == couponError &&
         other.status == status &&
         other.orderId == orderId &&
-        other.checkoutError == checkoutError;
+        other.checkoutError == checkoutError &&
+        other.canUndo == canUndo;
   }
 
   @override
@@ -185,6 +190,7 @@ class CartState {
       status,
       orderId,
       checkoutError,
+      canUndo,
     );
   }
 }

@@ -67,3 +67,38 @@ ref.watch is used by the Riverpod page to subscribe to the cart and by canUndoPr
 ### Question 2 — Why does the summary card rebuild less often than the setState version?
 
 The summary card is a separate ConsumerWidget and subscribes only to selected cart values. It rebuilds when those selected values change, not whenever an unrelated part of the cart state changes. The setState version has a broader rebuild scope because setState marks its State object's widget subtree for rebuilding.
+
+
+
+
+## Part 4 — Cubit
+
+### T1–T2 — Methods and equality
+
+CartCubit owns CartState and exposes methods such as add, changeQty, applyCoupon, checkout and undo. Each method creates a new immutable CartState and sends it through emit(). CartState implements value equality and hashCode, allowing Cubit to suppress repeated equal states. Applying SAVE10 twice without changing anything else produces no additional state emission.
+
+### T3 — Why does the summary rebuild less often?
+
+CubitSummaryCard uses BlocSelector to select only itemCount, subtotal, discount and total. Changes to unrelated fields, such as couponError or checkout status, do not rebuild the summary unless one of its selected values changes.
+
+### T4 — What prevents an emit after disposal?
+
+The Cubit checks isClosed after awaiting the checkout API. If the Cubit was closed while checkout was running, it returns without emitting into a closed Cubit.
+
+### T5 — Why is canUndo in CartState?
+
+A getter on CartCubit is not itself a stream emission, so BlocBuilder cannot automatically detect when it changes. Putting canUndo into CartState makes the Undo button react to the same state stream as the rest of the UI.
+
+### Question 1 — What would break if BlocProvider were placed inside CartBody?
+
+The provider would be scoped too low. Widgets outside CartBody or above that provider could not access the Cubit. It could also be recreated or disposed with the body instead of being owned by the whole page. BlocProvider should wrap the subtree that needs the Cubit.
+
+### Question 2 — Give the Riverpod equivalent of each Cubit/Bloc concept.
+
+| flutter_bloc | Riverpod equivalent |
+|---|---|
+| BlocProvider | ProviderScope and a provider declaration |
+| BlocBuilder | ConsumerWidget with ref.watch |
+| BlocListener | ref.listen |
+| context.read | ref.read |
+| buildWhen | ref.watch(provider.select(...)) |
